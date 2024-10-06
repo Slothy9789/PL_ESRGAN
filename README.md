@@ -49,4 +49,3 @@ python .\inference_realesrgan.py -n model -i inputs -s4.0 -o outputs
 ```
 
 Where `model` refers to a pre-trained super-resolution model for the Moon, Mars, or Mercury, `inputs` are the images to be reconstructed at super-resolution, and the results are stored in the `outputs` folder.
-# PL-ESRGAN
