@@ -1,7 +1,6 @@
-<div align="center">PLanetary Enhanced Super-Resolution Generative Adversarial NetWork (PL-ESRGAN)
+# <div align="center">PLanetary Enhanced Super-Resolution Generative Adversarial NetWork (PL-ESRGAN)
 
-
-## <div align="center"><b><a href="README.md">English</a> | <a href="README_CN.md">简体中文</a></b></div>
+ <div align="center"><b><a href="README.md">English</a> | <a href="README_CN.md">简体中文</a></b></div>
 
 PL-ESRGAN aims at developing **Practical Algorithms for Planetary  Image Restoration**，specifically focusing on the **Moon, Mars, and Mercury**，based on  https://github.com/xinntao/Real-ESRGAN.<br>
 
