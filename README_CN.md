@@ -1,7 +1,7 @@
-<div align="center">PLanetary Enhanced Super-Resolution Generative Adversarial Network (PL-ESRGAN)
+# <div align="center">PLanetary Enhanced Super-Resolution Generative Adversarial Network (PL-ESRGAN)
 
 
-## <div align="center"><b><a href="README.md">English</a> | <a href="README_CN.md">简体中文</a></b></div>
+ <div align="center"><b><a href="README.md">English</a> | <a href="README_CN.md">简体中文</a></b></div>
 
 基于 https://github.com/xinntao/Real-ESRGAN 的 PL-ESRGAN 的目标是开发出**实用的行星影像修复算法，特别关注月球、火星和水星**。
 
