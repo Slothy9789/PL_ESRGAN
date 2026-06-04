@@ -8,6 +8,7 @@ from osgeo import gdal
 from realesrgan import RealESRGANer
 from realesrgan.archs.srvgg_arch import SRVGGNetCompact
 import numpy as np
+import tifffile as tif
 
 def main():
     """Inference demo for Real-ESRGAN.
@@ -19,13 +20,6 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input', type=str, help='Input image or folder')
-    # parser.add_argument(
-    #     '-n',
-    #     '--model_name',
-    #     type=str,
-    #     default='RealESRGAN_x4plus',
-    #     help=('Model names: RealESRGAN_x4plus | RealESRNet_x4plus | RealESRGAN_x4plus_anime_6B | RealESRGAN_x2plus | '
-    #           'realesr-animevideov3 | realesr-general-x4v3'))
     parser.add_argument(
         '-n',
         '--model_name',
@@ -33,7 +27,6 @@ def main():
         default='RealESRGAN_x4plus',
         help=('Model names: RealESRGAN_x4plus | RealESRNet_x4plus | RealESRGAN_x4plus_anime_6B | RealESRGAN_x2plus | '
               'realesr-animevideov3 | realesr-general-x4v3'))
-    # parser.add_argument('-o', '--output', type=str, default='results_segment', help='Output folder')
     parser.add_argument('-o', '--output', type=str, default=r'', help='Output folder')
     parser.add_argument(
         '-dn',
@@ -73,43 +66,14 @@ def main():
     parser.add_argument('--gap_min_width', type=int, default=2, help='Min connected width')
     parser.add_argument('--gap_min_height', type=int, default=30, help='Min connected height')
     parser.add_argument('--gap_dilate_iter', type=int, default=0, help='Dilation iterations for gap mask')
-    parser.add_argument('--save_gap_mask', type=bool, default=True, help='Whether to save the gap mask')
+    parser.add_argument('--gap_filling', type=bool, default=True, help='Whether to save the gap mask')
+
 
 
     args = parser.parse_args()
     file_url = []
     # determine models according to model names
     args.model_name = args.model_name.split('.')[0]
-    # if args.model_name == 'RealESRGAN_x4plus':  # x4 RRDBNet model
-    #     model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=4)
-    #     netscale = 4
-    #     file_url = ['https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth']
-    # elif args.model_name == 'RealESRNet_x4plus':  # x4 RRDBNet model
-    #     model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=4)
-    #     netscale = 4
-    #     file_url = ['https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.1/RealESRNet_x4plus.pth']
-    # elif args.model_name == 'RealESRGAN_x4plus_anime_6B':  # x4 RRDBNet model with 6 blocks
-    #     model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=6, num_grow_ch=32, scale=4)
-    #     netscale = 4
-    #     file_url = ['https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.2.4/RealESRGAN_x4plus_anime_6B.pth']
-    # elif args.model_name == 'RealESRGAN_x2plus':  # x2 RRDBNet model
-    #     model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=2)
-    #     netscale = 2
-    #     file_url = ['https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth']
-    # elif args.model_name == 'realesr-animevideov3':  # x4 VGG-style model (XS size)
-    #     model = SRVGGNetCompact(num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=16, upscale=4, act_type='prelu')
-    #     netscale = 4
-    #     file_url = ['https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-animevideov3.pth']
-    # elif args.model_name == 'realesr-general-x4v3':  # x4 VGG-style model (S size)
-    #     model = SRVGGNetCompact(num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=32, upscale=4, act_type='prelu')
-    #     netscale = 4
-    #     file_url = [
-    #         'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-general-wdn-x4v3.pth',
-    #         'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-general-x4v3.pth'
-    #     ]
-    # -----------------------------------------------------------------------------------------------------------------------------------------
-
-
 
     # determine model paths
     if args.model_path is not None:
@@ -154,32 +118,26 @@ def main():
 
     for idx, path in enumerate(paths):
         imgname, extension = os.path.splitext(os.path.basename(path))
-
-        print('Predicting', idx, imgname)
-        import tifffile as tif       # -----------------------------------------------------------------------------------
         if path.endswith(".tif"):
-            img = tif.imread(path)     #img = cv2.imread(path, cv2.IMREAD_UNCHANGED) ----------------------------------------------
+            print('Predicting', idx, imgname)
+            img = tif.imread(path)     #img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
             if args.Maxvalue != 255 and args.Minvalue != 0:
-                
-                # 
+                print('NO 0-255 Range')
                 denom = float(args.Maxvalue - args.Minvalue)
                 if denom == 0:
-                    # 
                     img[:] = 0.0
                 else:
                     img = (img - float(args.Minvalue)) * 255.0 / denom
-                # 
                 img = np.clip(img, 0, 255).astype(np.uint8)
             else:
                 img = img.astype(np.uint8)
-            # print(np.shape(img))
 
-            if np.ndim(img) == 4 and np.shape(img)[0] == 1 and np.shape(img)[1] == 1:  #(1,1,64,64)  # -----------------------------
-                img =img[0,0,:,:]         # --------------------------------------------------------------------------------------
-            elif np.ndim(img) == 3 and np.shape(img)[2] == 1 :  #(64,64, 1)  # -----------------------------
-                img =img[:, :, 0]         # --------------------------------------------------------------------------------------
-            elif np.ndim(img) == 3 and np.shape(img)[0] == 1 :  #(1, 64,64)  # -----------------------------
-                img =img[0,:, :]         # --------------------------------------------------------------------------------------
+            if np.ndim(img) == 4 and np.shape(img)[0] == 1 and np.shape(img)[1] == 1:  #(1,1,64,64) 
+                img =img[0,0,:,:]       
+            elif np.ndim(img) == 3 and np.shape(img)[2] == 1 :  #(64,64, 1)
+                img =img[:, :, 0] 
+            elif np.ndim(img) == 3 and np.shape(img)[0] == 1 :  #(1, 64,64)
+                img =img[0,:, :] 
 
 
             if len(img.shape) == 3 and img.shape[2] == 4:
@@ -204,7 +162,7 @@ def main():
             border_tol_rel = 0.02   # ~2% of height; require touching top/bottom within this tolerance
 
             min_h = int(min_h_rel * H)
-            min_area = max(1000, int(min_area_rel * H * W))  # also guard small images
+            min_area = int(min_area_rel * H * W) # also guard small images
             min_w = int(args.gap_min_width)
             border_tol = max(1, int(border_tol_rel * H))
 
@@ -255,10 +213,6 @@ def main():
 
 
             try:
-                # if args.face_enhance:
-                #     _, _, output = face_enhancer.enhance(img, has_aligned=False, only_center_face=False, paste_back=True)
-                # else:
-                      #output, _ = upsampler.enhance(img, outscale=args.outscale)
                 output = upsampler.enhance(img, outscale=args.outscale)
             except RuntimeError as error:
                 print('Error', error)
@@ -273,13 +227,16 @@ def main():
                 if args.suffix == '':
                     save_path = os.path.join(args.output, f'{imgname}_SR.{extension}')
                 else:
-                    # save_path = os.path.join(args.output, f'{imgname}_{args.suffix}.{extension}')
                     save_path = os.path.join(args.output, f'{imgname}_SR.{extension}')
 
+                output_without_gap = output_without_gap.astype(np.uint8)
+                output = output_without_gap.copy()
+                output[gap_mask == 0] = 0
+                gap_mask = gap_mask.astype(np.uint8)
+                
                 if args.geo_info == True:
                     dataset = gdal.Open(path)
                     driver = gdal.GetDriverByName("GTiff")
-                    # 
                     proj = dataset.GetProjection()
                     gt = dataset.GetGeoTransform()
                     gt_list = list(gt)
@@ -288,32 +245,39 @@ def main():
                     gt_tuple = tuple(gt_list)
 
                     # 
-                    New_YG_dataset = driver.Create(os.path.join(args.output, save_path),
-                                                   np.shape(output)[1], np.shape(output)[0], 1,
+                    New_YG_dataset = driver.Create(save_path, np.shape(output)[1], np.shape(output)[0], 1,
                                                    gdal.GDT_Byte)  # , gdal.GDT_Int32
                     New_YG_dataset.SetGeoTransform(gt_tuple)
                     New_YG_dataset.SetProjection(proj)
                     band1 = New_YG_dataset.GetRasterBand(1)
-                    band1.WriteArray(output, 0, 0)  # 
+                    band1.WriteArray(output, 0, 0) 
                     New_YG_dataset = None
 
-                    if args.save_gap_mask:
+                    if args.gap_filling:
                         mask_save_path = os.path.join(args.output, f'{imgname}_GapMask.tif')
+                        output_without_gap_save_path = os.path.join(args.output, f'{imgname}_SR_GapFilling.tif')
+
                         New_ds = driver.Create(mask_save_path, gap_mask.shape[1], gap_mask.shape[0], 1, gdal.GDT_Byte)
                         New_ds.SetGeoTransform(gt_tuple)
                         New_ds.SetProjection(proj)
                         New_ds.GetRasterBand(1).WriteArray(gap_mask, 0, 0)
                         New_ds.FlushCache()
                         New_ds = None
+
+                        New_ds1 = driver.Create(output_without_gap_save_path, output_without_gap.shape[1], output_without_gap.shape[0], 1, gdal.GDT_Byte)
+                        New_ds1.SetGeoTransform(gt_tuple)
+                        New_ds1.SetProjection(proj)
+                        New_ds1.GetRasterBand(1).WriteArray(output_without_gap, 0, 0)
+                        New_ds1.FlushCache()
+                        New_ds1 = None
                 else:
-                    output = output.astype(np.uint8)   # -------------------------------------------------------------------------
-                    # output = cv2.flip(output, 0)
-                    tif.imwrite(save_path, output)     # -------------------------------------------------------------------------
-                    if args.save_gap_mask:             # -------------------------------------------------------------------------
-                        mask_save_path = os.path.join(args.output, f'{imgname}_gapmask.tif')
-                        gap_mask = gap_mask.astype(np.uint8)
+                    tif.imwrite(save_path, output)   
+                    if args.gap_filling:      
+                        mask_save_path = os.path.join(args.output, f'{imgname}_GapMask.tif')
+                        output_without_gap_save_path = os.path.join(args.output, f'{imgname}_SR_GapFilling.tif')
                         # gap_mask = cv2.flip(gap_mask, 0)
                         tif.imwrite(mask_save_path, gap_mask)
+                        tif.imwrite(output_without_gap_save_path, output_without_gap)
 
 
 if __name__ == '__main__':
